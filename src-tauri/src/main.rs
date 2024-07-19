@@ -3,7 +3,9 @@
 
 use serde::Serialize;
 use std::{env, fs, os::unix::fs::MetadataExt, path::Path};
+use tauri::Manager;
 use walkdir::WalkDir;
+use window_vibrancy::*;
 
 #[derive(Debug, Clone, Serialize)]
 struct Node {
@@ -80,6 +82,15 @@ fn walk_dirs(dir: &str) -> Node {
 
 fn main() {
     tauri::Builder::default()
+        .setup(|app| {
+            let window = app.get_window("main").unwrap();
+
+            #[cfg(target_os = "macos")]
+            apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None)
+                .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![walk_dirs])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
